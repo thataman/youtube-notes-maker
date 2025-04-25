@@ -1,0 +1,38 @@
+{
+    "manifest_version": 3,
+    "name": "YouTube Video Notes",
+    "version": "1.0",
+    "description": "Take timestamped screenshots from YouTube videos and manage notes.",
+    "permissions": [
+      "activeTab", 
+      "scripting", 
+      "storage"    
+    ],
+    "host_permissions": [
+      "*://www.youtube.com/*" 
+    ],
+    "background": {
+      "service_worker": "service_worker.js"
+    },
+    "content_scripts": [
+      {
+        "matches": ["*://www.youtube.com/watch*"],
+        "js": ["utils/helpers.js", "content_script.js"],
+        "css": ["content_style.css"] 
+      }
+    ],
+    "action": {
+      "default_popup": "popup.html", 
+      "default_icon": {
+        "16": "icons/icon16.png",
+        "48": "icons/icon48.png"
+        
+      }
+    },
+    "icons": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png"
+      
+    }
+    
+  }
