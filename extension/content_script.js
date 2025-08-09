@@ -1,39 +1,51 @@
-console.log("YouTube Notes Content Script Loaded!");
 
-// --- Configuration ---
-const API_ENDPOINT = 'http://localhost:5001/api'; // Your backend URL
+const API_ENDPOINT = 'http://localhost:5001/api';
 
-// --- DOM Elements ---
+
 let captureButton = null;
 
-// --- Functions ---
+
 
 function getVideoElement() {
-  // Find the primary video player element on the page
-  return document.querySelector('video.html5-main-video');
+
+  return document.querySelector("video")
 }
 
 function getVideoDetails(videoElement, currentUrl) {
   if (!videoElement) return null;
 
   const currentTime = videoElement.currentTime;
-  const videoId = getYouTubeVideoId(currentUrl); // Use helper
-  const videoTitleElement = document.querySelector('h1.ytd-watch-metadata yt-formatted-string');
-  const videoTitle = videoTitleElement ? videoTitleElement.innerText : 'YouTube Video';
-  const timestamp = formatTime(currentTime); // Use helper
+
+  
+  const partUrl = Math.round(currentTime);
+
+     
+      const canvas = document.createElement("canvas");
+      canvas.width = videoElement.videoWidth;
+      canvas.height = videoElement.videoHeight;
+
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+
+    const image = canvas.toDataURL("image/png");
+    
+  
+
+
 
   return {
-    videoId,
-    videoTitle,
-    timestamp,
-    currentTime, // Keep raw seconds if needed
-    videoUrl: currentUrl
+    // videoId,
+    // videoTitle,
+    image:image,
+    
+    videoUrl: `${currentUrl}&t=${partUrl}s`
   };
 }
 
 async function captureScreenshotAndSend() {
   const videoElement = getVideoElement();
   const currentUrl = window.location.href;
+console.log(videoElement);
 
   if (!videoElement) {
     console.error("YouTube video element not found.");
@@ -42,18 +54,18 @@ async function captureScreenshotAndSend() {
   }
 
   const details = getVideoDetails(videoElement, currentUrl);
+ 
+  
   if (!details) {
      console.error("Could not get video details.");
      alert("Could not get video details.");
      return;
   }
 
-  console.log("Capturing:", details);
-
   // Send message to service worker to capture the visible tab
   try {
     const response = await chrome.runtime.sendMessage({
-      action: "captureVisibleTab",
+      action: "captureVideoElement",
       details: details
     });
 
@@ -62,11 +74,11 @@ async function captureScreenshotAndSend() {
 
     if (response.status === 'success') {
         console.log('Screenshot captured and sent to backend.', response.data);
-        // Optional: Show a brief confirmation message on the page
-        showConfirmation(`Slide saved at ${details.timestamp}`);
+      
+        showConfirmation(`Slide saved at ${details}`);
     } else {
         console.error('Failed to capture or save:', response.error);
-        alert(`Error saving slide: ${response.error}`);
+        alert(`Error saving slide: ${response.error} ,${response.status}`);
     }
   } catch (error) {
       console.error("Error sending message to service worker:", error);
@@ -103,6 +115,8 @@ function addCaptureButton() {
 
   const playerControls = document.querySelector('.ytp-right-controls');
   if (playerControls) {
+    console.log("button found");
+    
     captureButton = document.createElement('button');
     captureButton.id = 'yt-notes-capture-btn';
     captureButton.textContent = '📸 Save Slide'; // Or use an icon
@@ -119,7 +133,7 @@ function addCaptureButton() {
     captureButton.style.borderRadius = '2px';
 
     captureButton.onclick = (e) => {
-        e.stopPropagation(); // Prevent video click-through
+        e.stopPropagation(); 
         captureScreenshotAndSend();
     };
 
